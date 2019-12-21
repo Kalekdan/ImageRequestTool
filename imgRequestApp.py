@@ -8,9 +8,11 @@ app = Flask(__name__)
 
 
 # TODO: fix bug with saving as jpeg
+# TODO: add auto text sizing for watermark
 
 @app.route('/query-example')
 def query_example():
+    # Get the GET request arguments
     image = request.args.get('img')  # if image doesn't exist, returns None
     res = request.args.get('res')  # Takes parameter in format '1920x1080'
     if res is not None:
@@ -47,6 +49,7 @@ def jsonexample():
     return 'Todo...'
 
 
+# Generate a custom file name to specify a specific image and parameters used
 def generateFileName(imageName, resolution, type, bgCol, wtmk):
     if resolution is None:
         resStr = ''
@@ -63,6 +66,7 @@ def generateFileName(imageName, resolution, type, bgCol, wtmk):
     return imageName + resStr + bgColStr + wtmkStr + '.' + type;
 
 
+# Return true if the image already exists using the parameters specified else return false
 def imageExistsInCache(filename):
     return os.path.exists('imgCache/' + filename)
 
@@ -80,11 +84,13 @@ def generateNewImg(baseImgName, newImgName, resolution, type, bgCol, wtmk):
     return im
 
 
+# Resize the image to the x, y values provided
 def resizeImage(imageToResize, x, y):
     size = x, y
     return imageToResize.resize(size, Image.ANTIALIAS)
 
 
+# Add a watermark to the image
 def addWaterMark(image, text):
     # make the image editable
     image_drawing = ImageDraw.Draw(image)
@@ -92,14 +98,18 @@ def addWaterMark(image, text):
     font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 40)
     W, H = image.size
     w, h = image_drawing.textsize(text, font=font)
+    # Write text on image
     image_drawing.text(((W - w) / 2, (H - h) / 2), text, fill=black, font=font)
     return image
 
 
+# Add a background color to the image
 def addBackgroundColor(image, color):
+    # Generate a new image of the same size and fill it with color
     background = Image.new("RGBA", (image.size[0], image.size[1]))
     bgDraw = ImageDraw.Draw(background)
     bgDraw.rectangle(((0, 00), (image.size[0], image.size[1])), fill='#' + color)
+    # Return new composite image of base image + color background
     return Image.alpha_composite(background, image)
 
 

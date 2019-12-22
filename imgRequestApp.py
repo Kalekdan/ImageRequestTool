@@ -10,7 +10,6 @@ helpHTML = '''<style type="text/css">@media screen and (max-width: 767px) {.tg {
 
 
 # TODO: fix bug with saving as jpeg
-# TODO: add auto text sizing for watermark
 
 @app.route('/get-custom-image')
 def query_example():
@@ -89,12 +88,23 @@ def addWaterMark(image, text):
     # make the image editable
     image_drawing = ImageDraw.Draw(image)
     black = (3, 8, 12)
-    font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", 40)
+    font = getFontAutoSized(image, text, .8)
     W, H = image.size
     w, h = image_drawing.textsize(text, font=font)
     # Write text on image
     image_drawing.text(((W - w) / 2, (H - h) / 2), text, fill=black, font=font)
     return image
+
+
+# Returns the font that is the correct size to take up the specified fraction of the image
+def getFontAutoSized(image, txt, fraction):
+    fontsize = 1
+    font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", fontsize)
+    while font.getsize(txt)[0] < fraction * image.size[0]:
+        # iterate until the text size is just larger than the criteria
+        fontsize += 1
+        font = ImageFont.truetype("Pillow/Tests/fonts/FreeMono.ttf", fontsize)
+    return font
 
 
 # Add a background color to the image

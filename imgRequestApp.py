@@ -6,10 +6,10 @@ import os.path
 
 app = Flask(__name__)
 
-helpHTML = '''<style type="text/css">@media screen and (max-width: 767px) {.tg {width: auto !important;}.tg col {width: auto !important;}.tg-wrap {overflow-x: auto;-webkit-overflow-scrolling: touch;}}</style><div class="tg-wrap"><table style="border-collapse:collapse;border-spacing:0" class="tg"><tr><th style="font-family:Arial, sans-serif;font-size:14px;font-weight:bold;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">Key</th><th style="font-family:Arial, sans-serif;font-size:14px;font-weight:bold;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">Example Value</th><th style="font-family:Arial, sans-serif;font-size:14px;font-weight:bold;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">Description</th></tr><tr><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">img</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">02_04_2019_001158_2019-04-02-11-56-36<br></td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">The file name (without extension) of the image you want to request<br><span style="font-style:italic">Request will fail if not specified</span></td></tr><tr><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">res</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">1920x1080</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">The horizontal and vertical resolution with an 'x' as a separater of the output desired.<br><span style="font-style:italic">Will retain original resolution if value not specified</span></td></tr><tr><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">background</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">FF1E1A</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">The background color to set on the image given as a hex code.<br><span style="font-style:italic">Will retain transparency if value not specified</span><br></td></tr><tr><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">watermark</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">This is a watermark</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">Adds a watermark to the image returned using the string provided<br><span style="font-style:italic">Will not add a watermark if value not specified</span><br></td></tr><tr><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">type</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">gif</td><td style="font-family:Arial, sans-serif;font-size:14px;padding:10px 5px;border-style:solid;border-width:1px;overflow:hidden;word-break:normal;border-color:black;text-align:left;vertical-align:top">The extension of the image type you would like returned<br><span style="font-style:italic">Returns image as '.png' if value not specified</span><br></td></tr></table></div>'''
+f = open("helpPage.html", "r")
+helpHTML = f.read()
+f.close()
 
-
-# TODO: fix bug with saving as jpeg
 
 @app.route('/get-custom-image')
 def query_example():
@@ -73,7 +73,7 @@ def generateNewImg(baseImgName, newImgName, resolution, type, bgCol, wtmk):
         im = addWaterMark(im, wtmk)
     if bgCol is not None:
         im = addBackgroundColor(im, bgCol)
-    im.save('imgCache/' + newImgName, type)
+    im = saveImageAsType(im, newImgName, type)
     return im
 
 
@@ -115,6 +115,15 @@ def addBackgroundColor(image, color):
     bgDraw.rectangle(((0, 00), (image.size[0], image.size[1])), fill='#' + color)
     # Return new composite image of base image + color background
     return Image.alpha_composite(background, image)
+
+
+# Saves the image with the name provided
+def saveImageAsType(image, name, type):
+    # if type is jpeg, remove transparency before saving
+    if type == 'jpeg':
+        image = image.convert('RGB')
+    image.save('imgCache/' + name, type)
+    return image
 
 
 if __name__ == '__main__':
